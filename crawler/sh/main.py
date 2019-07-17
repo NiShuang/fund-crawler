@@ -23,11 +23,11 @@ area = 'sh'
 mongoDB = MongoDB()
 client = mongoDB.getClient()
 database = client['found']
-collection = database[area + '_' + type]
+collection = database[area + '_' + 'found_record']
 
-def fix_name(report):
-    print report['name'], report['year'], report['link']
-    collection.update({'link':report['link']},{'$set':{'foundation_name':report['name']}})
+# def fix_name(report):
+#     print report['name'], report['year'], report['link']
+#     collection.update({'link':report['link']},{'$set':{'foundation_name':report['name']}})
 
 def get_all_report():
     with open('report_list.json', 'r') as file:
@@ -37,6 +37,7 @@ def get_all_report():
 def get_report_list():
     with open('report_list.json', 'r') as file:
         report_list = json.load(file)
+
     exist_report = collection.distinct("link")
     i = 0
     while i < len(report_list):
@@ -51,9 +52,19 @@ def get_report_list():
 
 
 def get_report_info(report):
-    c = ReportCrawler(type)
-    c.start_by_id(report)
-    collection.insert(c.foundation)
+    c = ReportCrawler(report)
+    data = c.start()
+    type_list = [
+        'basic_info',
+        'assets_info',
+        'cash_info',
+        'welfare_info',
+        'public_info',
+        'business_info'
+    ]
+    for type in type_list:
+        database[area + '_' + type].insert(data[type])
+    collection.insert(report)
     # time.sleep(5)
 
 

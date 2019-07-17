@@ -16,7 +16,7 @@ sys.setdefaultencoding("utf-8")
 
 class ReportListCrawler:
     def __init__(self):
-        self.ids = [1100001,1200001,1300001,1400001,1500001,2100001,2200001,2300001,3100001,3200001,3300001,3400001,3500001,3600001,3700001,4100001,4200001,4300001,4400001,4500001,4600001,5000001,5100001,5200001,5300001,5400001,6100001,6200001,6300001,6400001,6500001]
+        self.ids = [1000001, 1100001,1200001,1300001,1400001,1500001,2100001,2200001,2300001,3100001,3200001,3300001,3400001,3500001,3600001,3700001,4100001,4200001,4300001,4400001,4500001,4600001,5000001,5100001,5200001,5300001,5400001,6100001,6200001,6300001,6400001,6500001]
         self.url = 'http://www.chinanpo.gov.cn/bgsindex.html'
 
     def get_reports(self):
@@ -90,14 +90,14 @@ class ReportListCrawler:
             td = tr.find_all('td')[2]
             title = a.get_text()
             year = int(re.findall(year_pattern, title)[0])
-            if year < 2015:
+            if year < 2013:
                 continue
             pattern = re.compile('javascript:toHref\((\d+),\d+\)')
             title_id = re.findall(pattern, a['href'])[0]
             pattern = re.compile('javascript:toHref\(\d+,(\d+)\)')
             diction_id = re.findall(pattern, a['href'])[0]
             publish_date = td.get_text()
-            print title_id, diction_id, title, publish_date, year
+            # print title_id, diction_id, title, publish_date, year
             report = {
                 'title_id': title_id,
                 'title': title,

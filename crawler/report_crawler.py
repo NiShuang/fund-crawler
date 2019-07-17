@@ -15,18 +15,35 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 class ReportCrawler:
-    def __init__(self, type):
+    def __init__(self, report):
         requests.adapters.DEFAULT_RETRIES = 5
         self.session = requests.session()
         self.session.keep_alive = False
         self.public_check_tds = []
-        self.type = type
+        self.base_info = self.get_report_by_id(report)
 
-    def start_by_id(self, report):
-        self.get_report_by_id(report)
-        self.extract_info(self.type)
+    def start(self):
+        type_list = [
+            'basic_info',
+            'assets_info',
+            'cash_info',
+            'welfare_info',
+            'public_info',
+            'business_info'
+        ]
+        data = {}
+        for type in type_list:
+            data[type] = self.start_by_type(type)
+        return data
+
+    def start_by_type(self, type):
+        self.foundation = {}
+        self.extract_info(type)
         self.format()
+        self.foundation.update(self.base_info)
         self.print_foudation()
+        return self.foundation
+
 
     def get_report_by_id(self, report):
         form_data = {
@@ -42,18 +59,19 @@ class ReportCrawler:
         # for linebreak in soup.find_all('br'):
         #     linebreak.extract()
         self.soup = soup
-        self.foundation = {}
+        foundation = {}
         pattern = re.compile('(20\d\d)')
         year = re.findall(pattern, report['title'])[0]
-        self.foundation['year'] = year
-        self.foundation['publish_date'] = report['publish_date']
-        self.foundation['title_id'] = report['title_id']
+        foundation['year'] = year
+        foundation['publish_date'] = report['publish_date']
+        foundation['title_id'] = report['title_id']
         td = self.soup.find('td', class_=re.compile('label|unnamed2'), text=re.compile(u'基金会名称'))
         if td != None:
-            self.foundation['foundation_name'] = td.find_next_sibling('td').get_text(strip=True)
+            foundation['foundation_name'] = td.find_next_sibling('td').get_text(strip=True)
         else:
 
-            self.foundation['foundation_name'] = report['title'][:str(report['title']).index('20')]
+            foundation['foundation_name'] = report['title'][:str(report['title']).index('20')]
+        return foundation
 
 
     def format(self):
@@ -309,3 +327,11 @@ class ReportCrawler:
         except:
             return
 
+if __name__ == '__main__':
+    print ReportCrawler({
+      'title_id': 22018,
+      'area_id': 1000001,
+      'diction_id':102,
+        'title': 'qwe2016qwe',
+        'publish_date': '2018-08-08'
+    }).start()

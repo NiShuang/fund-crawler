@@ -3,7 +3,6 @@
 
 
 import json
-import time
 from util.database import MongoDB
 from report_crawler import ReportCrawler
 from multi_thread.multi_thread import WorkManager
@@ -22,8 +21,8 @@ area = 'bj'
 
 mongoDB = MongoDB()
 client = mongoDB.getClient()
-database = client['found']
-collection = database[area + '_' + type]
+database = client[area + '_' + 'found']
+collection = database[area + '_' + 'found_record']
 
 
 def get_report_list():
@@ -43,9 +42,19 @@ def get_report_list():
 
 
 def get_report_info(report):
-    c = ReportCrawler(type)
-    c.start_by_id(report)
-    collection.insert(c.foundation)
+    c = ReportCrawler(report)
+    data = c.start()
+    type_list = [
+        'basic_info',
+        'assets_info',
+        'cash_info',
+        'welfare_info',
+        'public_info',
+        'business_info'
+    ]
+    for type in type_list:
+        database[area + '_' + type].insert(data[type])
+    collection.insert(report)
     # time.sleep(5)
 
 

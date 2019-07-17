@@ -13,19 +13,43 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 class ReportCrawler:
-    def __init__(self, type):
+    def __init__(self, report):
         requests.adapters.DEFAULT_RETRIES = 5
         self.session = requests.session()
         self.session.keep_alive = False
         self.public_check_tds = []
-        self.type = type
+        self.base_info = self.get_report_by_id(report)
 
 
-    def start_by_id(self, report):
-        self.get_report_by_id(report)
-        self.extract_info(self.type)
+    def start(self):
+        type_list = [
+            'assets_info',
+            'cash_info',
+            'welfare_info',
+            'public_info',
+            'business_info',
+            'basic_info'
+        ]
+        data = {}
+        for type in type_list:
+            data[type] = self.start_by_type(type)
+        return data
+
+    def start_by_type(self, type):
+        if type == 'basic_info':
+            soup = BeautifulSoup(self.html, 'html5lib')
+            for comment in soup(text=lambda text: isinstance(text, Comment)):
+                comment.extract()
+            # [s.extract() for s in soup.find_all('script')]
+            [s.extract() for s in soup.find_all(name='div', class_='Noprint')]
+            self.soup = soup
+        self.foundation = {}
+        self.foundation.update(self.base_info)
+        self.extract_info(type)
         self.format()
         self.print_foudation()
+        return self.foundation
+
 
     def get_report_by_id(self, report):
         link = report['link']
@@ -38,15 +62,16 @@ class ReportCrawler:
             report_link = 'http://mzj.beijing.gov.cn' + report_links[index]['href']
             req = self.session.get(report_link)
             soup = BeautifulSoup(req.text, 'html5lib')
-            report_link = 'http://mzj.beijing.gov.cn/wssb/forms/' + soup.find('input', value='查看所有')['onclick'][20:-2]
+            try:
+                report_link = 'http://mzj.beijing.gov.cn/wssb/forms/' + soup.find('input', value='查看所有')['onclick'][20:-2]
+            except:
+                continue
             req = self.session.get(report_link)
             html += req.text
         html = html.replace('<br>', '').replace('<br />', '').replace('<br/>', '')
         self.html = html
 
-        parser = 'html5lib'
-        if self.type == 'assets_info' or self.type == 'cash_info' or self.type == 'welfare_info' or self.type == 'business_info' or self.type == 'public_info':
-            parser = 'html.parser'
+        parser = 'html.parser'
         soup = BeautifulSoup(html, parser)
         for comment in soup(text=lambda text: isinstance(text, Comment)):
             comment.extract()
@@ -55,18 +80,19 @@ class ReportCrawler:
 
 
         self.soup = soup
-        self.foundation = {}
+        foundation = {}
         year = report['year']
-        self.foundation['year'] = year
+        foundation['year'] = year
 
         # self.foundation['publish_date'] = ''
-        self.foundation['title_id'] = report['title_id']
-        self.foundation['id_number'] = report['id_number']
+        foundation['title_id'] = report['title_id']
+        foundation['id_number'] = report['id_number']
         td = self.soup.find('td', class_=re.compile('label|unnamed2'), text=re.compile(u'基金会名称'))
         try:
-            self.foundation['foundation_name'] = td.find_next_sibling('td').find('input')['value']
+            foundation['foundation_name'] = td.find_next_sibling('td').find('input')['value']
         except:
-            self.foundation['foundation_name'] = ''
+            foundation['foundation_name'] = ''
+        return foundation
 
     def format(self):
         if self.foundation.has_key('established_time'):
@@ -380,5 +406,5 @@ if __name__ == '__main__':
     #         "year": "2017",
     #         "unit": "\u5317\u4eac\u5e02\u4eba\u6c11\u653f\u5e9c\u4fa8\u52a1\u529e\u516c\u5ba4"}
     # )
-    c.start_by_id({"name": "\u5317\u4eac\u5e02\u7d27\u6025\u6551\u63f4\u57fa\u91d1\u4f1a", "id_number": "0020115", "title_id": "20160020115", "link": "http://mzj.beijing.gov.cn/wssbweb/wssb/njxxgb/publishedView.do?action=publishedView&id=104041&catalogpara=N01&application=mjzz&instanceid=N0117112742001", "year": "2016", "unit": "\u5317\u4eac\u5e02\u6c11\u653f\u5c40"})
+    # c.start_by_id({"name": "\u5317\u4eac\u5e02\u7d27\u6025\u6551\u63f4\u57fa\u91d1\u4f1a", "id_number": "0020115", "title_id": "20160020115", "link": "http://mzj.beijing.gov.cn/wssbweb/wssb/njxxgb/publishedView.do?action=publishedView&id=104041&catalogpara=N01&application=mjzz&instanceid=N0117112742001", "year": "2016", "unit": "\u5317\u4eac\u5e02\u6c11\u653f\u5c40"})
     # c.start_by_id({"name": "\u9996\u90fd\u7ecf\u6d4e\u8d38\u6613\u5927\u5b66\u6559\u80b2\u57fa\u91d1\u4f1a", "id_number": "0020269", "title_id": "20150020269", "link": "http://mzj.beijing.gov.cn/wssbweb/wssb/njxxgb/publishedView.do?action=publishedView&id=1000074863&catalogpara=N02&application=mjzz&instanceid=N0116030342001", "year": "2015", "unit": "\u5317\u4eac\u5e02\u6559\u80b2\u59d4\u5458\u4f1a"})

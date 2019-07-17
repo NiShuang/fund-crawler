@@ -15,18 +15,35 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 class OldReportCrawler:
-    def __init__(self, type):
+    def __init__(self, report):
         requests.adapters.DEFAULT_RETRIES = 5
         self.session = requests.session()
         self.session.keep_alive = False
         self.public_check_tds = []
-        self.type = type
+        self.base_info = self.get_report_by_id(report)
 
-    def start_by_id(self, report):
-        self.get_report_by_id(report)
-        self.extract_info(self.type)
+    def start(self):
+        type_list = [
+            'basic_info',
+            'assets_info',
+            'cash_info',
+            'welfare_info',
+            'public_info',
+            'business_info'
+        ]
+        data = {}
+        for type in type_list:
+            data[type] = self.start_by_type(type)
+        return data
+
+    def start_by_type(self, type):
+        self.foundation = {}
+        self.foundation.update(self.base_info)
+        self.extract_info(type)
         self.format()
         self.print_foudation()
+        return self.foundation
+
 
     def get_report_by_id(self, report):
         form_data = {
@@ -46,27 +63,32 @@ class OldReportCrawler:
         html = req.text
         html = html.replace('<br>', '').replace('<br />', '').replace('<br/>', '')
         self.html = html
-        soup = BeautifulSoup(html, 'html5lib')
+        year = report['year']
+        if year == 2016 or year == '2016':
+            parser = 'html.parser'
+        else:
+            parser = 'html5lib'
+        soup = BeautifulSoup(html, parser)
         # for comment in soup(text=lambda text: isinstance(text, Comment)):
         #     comment.extract()
         # [s.extract() for s in soup('script')]
         # [s.extract() for s in soup('br')]
         [s.extract() for s in soup.find_all(name='div', class_='Noprint')]
         # print soup.prettify()
-        # print soup.find('body')
 
         self.soup = soup
-        self.foundation = {}
+        foundation = {}
         pattern = re.compile('(20\d\d)')
         year = re.findall(pattern, report['title'])[0]
-        self.foundation['year'] = year
-        self.foundation['publish_date'] = report['publish_date']
-        self.foundation['title_id'] = report['title_id']
+        foundation['year'] = year
+        foundation['publish_date'] = report['publish_date']
+        foundation['title_id'] = report['title_id']
         td = self.soup.find('td', class_=re.compile('label|unnamed2'), text=re.compile(u'基金会名称'))
         try:
-            self.foundation['foundation_name'] = td.find_next_sibling('td').find('input')['value']
+            foundation['foundation_name'] = td.find_next_sibling('td').find('input')['value']
         except:
-            self.foundation['foundation_name'] = report['title'][:str(report['title']).index('20')]
+            foundation['foundation_name'] = report['title'][:str(report['title']).index('20')]
+        return foundation
 
     def format(self):
         if self.foundation.has_key('established_time'):
@@ -153,8 +175,7 @@ class OldReportCrawler:
         index = item[1]
         self.foundation[index] = ''
         td = self.soup.find('td',class_=re.compile('unnamed2|unnamed4'), text=re.compile(label + '$'))
-        # print label
-        # print td
+        # print label,td
         try:
             td = td.find_next_sibling('td').find_next_sibling('td').find_next_sibling('td')
             span = td.span
@@ -383,3 +404,12 @@ class OldReportCrawler:
 
 
 
+if __name__ == '__main__':
+    print OldReportCrawler({
+      'title_id': 22018,
+      'area_id': 1000001,
+      'diction_id':102,
+        'title': 'qwe2016qwe',
+        'publish_date': '2018-08-08',
+        'year' : 2016
+    }).start()

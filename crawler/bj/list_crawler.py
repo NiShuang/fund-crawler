@@ -27,7 +27,7 @@ class ReportListCrawler:
             'imageField2.y': '18'
         }
         req = requests.post('http://mzj.beijing.gov.cn/wssbweb/wssb/njxxgb/publishedSearch.do?action=publishedSearch',data=form_data)
-        print req.text
+        # print req.text
         soup = BeautifulSoup(req.text, 'lxml')
         # for linebreak in soup.find_all('br'):
         #         linebreak.extract()
@@ -98,13 +98,11 @@ class ReportListCrawler:
 
 if __name__ == '__main__':
     report_list = []
-    report_list_crawler = ReportListCrawler(2017)
-    report_list.extend(report_list_crawler.get_report_list())
-    report_list_crawler = ReportListCrawler(2016)
-    report_list.extend(report_list_crawler.get_report_list())
     report_list_crawler = ReportListCrawler(2015)
     report_list.extend(report_list_crawler.get_report_list())
+    # report_list_crawler = ReportListCrawler(2014)
+    # report_list.extend(report_list_crawler.get_report_list())
 
     print len(report_list)
-    with open('report_list.json', 'w') as f:
+    with open('report_list1.json', 'w') as f:
         json.dump(report_list, f)

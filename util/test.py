@@ -12,7 +12,7 @@ with open('/Users/ciel/Downloads/test.csv', 'r') as file:
 
 writer_data = []
 for i, val in enumerate(data):
-    if i < 2:
+    if i < 1:
         continue
     for j in val:
         if j.startswith('['):
@@ -27,7 +27,7 @@ for i, val in enumerate(data):
 
 
 
-with open('result.csv', 'w') as f:
+with open('/Users/ciel/Downloads/result.csv', 'w') as f:
     writer = csv.writer(f)
     for row in writer_data:
         writer.writerow(row)

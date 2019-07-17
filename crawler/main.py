@@ -17,12 +17,10 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 class Crawler:
-    def __init__(self, type):
-        self.type = type
+    def __init__(self):
         mongoDB = MongoDB()
         self.client = mongoDB.getClient()
-        database = self.client['found']
-        self.collection = database[type]
+        self.database = self.client['found']
 
     def __del__(self):
         self.client.close()
@@ -31,10 +29,11 @@ class Crawler:
         file = open('report_list.json', 'r')
         report_list = json.load(file)
         file.close()
+        self.collection = self.database['found_record']
         exist_report = self.collection.distinct("title_id")
         i = 0
         while i < len(report_list):
-            if report_list[i]['title_id'] in exist_report:
+            if report_list[i]['title_id'] in exist_report or (report_list[i]['year'] not in [2016]):
                 del report_list[i]
                 i -= 1
             i += 1
@@ -46,11 +45,21 @@ class Crawler:
 
     def get_report_info(self, report):
         if report['year'] < 2017:
-            c = OldReportCrawler(type)
+            c = OldReportCrawler(report)
         else:
-            c = ReportCrawler(type)
-        c.start_by_id(report)
-        self.collection.insert(c.foundation)
+            c = ReportCrawler(report)
+        data = c.start()
+        type_list = [
+            'basic_info',
+            'assets_info',
+            'cash_info',
+            'welfare_info',
+            'public_info',
+            'business_info'
+        ]
+        for type in type_list:
+            self.database[type].insert(data[type])
+        self.collection.insert(report)
         time.sleep(5)
 
     def start(self):
@@ -63,14 +72,5 @@ class Crawler:
 
 
 if __name__ == '__main__':
-    type_list = [
-        # 'basic_info',
-        # 'assets_info',
-        # 'cash_info',
-        # 'welfare_info',
-        'public_info',
-        # 'business_info'
-    ]
-    for type in type_list:
-        c = Crawler(type)
-        c.start()
+    c = Crawler()
+    c.start()

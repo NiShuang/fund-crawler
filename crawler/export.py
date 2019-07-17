@@ -15,7 +15,7 @@ index_dict = get_dict()
 
 mongoDB = MongoDB()
 client = mongoDB.getClient()
-database = client['found']
+database = client['bj_found1']
 c_names = database.collection_names()
 export_file = Export()
 
@@ -62,5 +62,5 @@ def export_by_c(c_name):
 if __name__ == '__main__':
     for c in c_names:
         export_by_c(c)
-        export_file.save("fund1")
+        export_file.save("fund_bj1")
 
