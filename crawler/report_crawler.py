@@ -3,10 +3,8 @@
 
 import requests
 import re
-import time
 from bs4 import BeautifulSoup
-from multi_thread.multi_thread import WorkManager
-from config.config import thread_num, items as item_list
+from config.config import items as item_list
 
 import sys
 
@@ -19,8 +17,8 @@ class ReportCrawler:
         requests.adapters.DEFAULT_RETRIES = 5
         self.session = requests.session()
         self.session.keep_alive = False
-        self.public_check_tds = []
-        self.base_info = self.get_report_by_id(report)
+        # self.public_check_tds = []
+        # self.base_info = self.get_report_by_id(report)
 
     def start(self):
         type_list = [
@@ -43,7 +41,6 @@ class ReportCrawler:
         self.foundation.update(self.base_info)
         self.print_foudation()
         return self.foundation
-
 
     def get_report_by_id(self, report):
         form_data = {
